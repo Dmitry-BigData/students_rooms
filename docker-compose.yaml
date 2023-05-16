@@ -1,0 +1,36 @@
+version: "3"
+services:
+  postgres_db:
+    container_name: postgres_container
+    image: postgres
+    restart: always
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./db_pgdata:/db_pgdata
+    env_file:
+      - .env
+    networks:
+      - custom
+
+  app:
+    container_name: app_container
+    build:
+      dockerfile: ./python/Dockerfile
+    depends_on:
+      - postgres_db
+    volumes:
+      - ./python/query_results:/app/query_results
+    env_file:
+      - .env
+    networks:
+      - custom
+    command: poetry run python /app/main.py
+
+networks:
+  custom:
+    driver: bridge
